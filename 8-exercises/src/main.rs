@@ -1,16 +1,16 @@
-use clap::{command, Parser, Subcommand};
+use clap::{Parser, Subcommand, command};
 
+mod inclusive_split;
 mod median;
 mod mode;
 mod piggy;
-mod word_iter;
 
 #[derive(Parser)]
 #[command(version, about, long_about = None)]
 #[command(propagate_version = true)]
 struct Cli {
     #[command(subcommand)]
-   commands: Command
+    commands: Command,
 }
 
 #[derive(Subcommand, Clone)]
@@ -23,22 +23,18 @@ enum Command {
 fn main() {
     let cli = Cli::parse();
     match &cli.commands {
-        Command::Median { values } => {
-            match median::median(values) {
-                Some(result) => {
-                    println!("Median value is: {result}");
-                },
-                None => std::process::exit(exitcode::USAGE),
+        Command::Median { values } => match median::median(values) {
+            Some(result) => {
+                println!("Median value is: {result}");
             }
-        }
-        Command::Mode { values } => {
-            match mode::mode(values) {
-                Some(result) => {
-                    println!("Mode value is: {result}");
-                },
-                None => std::process::exit(exitcode::USAGE),
+            None => std::process::exit(exitcode::USAGE),
+        },
+        Command::Mode { values } => match mode::mode(values) {
+            Some(result) => {
+                println!("Mode value is: {result}");
             }
-        }
+            None => std::process::exit(exitcode::USAGE),
+        },
         Command::Piggy { words } => {
             println!("{}", piggy::piggy(&words.join(" ")));
         }
