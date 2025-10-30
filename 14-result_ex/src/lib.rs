@@ -1,3 +1,5 @@
+//! Pulling this out to a lib to play with workspaces
+
 pub trait ResultEx<T0, E0> {
     fn flat_map<T1, F>(self, f: F) -> Result<T1, E0>
     where

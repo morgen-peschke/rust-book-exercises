@@ -1,8 +1,7 @@
 mod config;
-mod result_ex;
 
 use crate::config::Config;
-use crate::result_ex::ResultEx;
+use result_ex::ResultEx;
 use anyhow::Result;
 use std::{env, fs};
 

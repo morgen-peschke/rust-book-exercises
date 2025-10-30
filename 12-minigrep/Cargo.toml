@@ -6,3 +6,4 @@ edition = "2024"
 [dependencies]
 anyhow = { version = "1.0" }
 thiserror = "2.0"
+result_ex = { path = "../14-result_ex" }
