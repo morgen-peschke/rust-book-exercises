@@ -1,19 +1,37 @@
+use std::rc::Rc;
+
 #[derive(Debug, PartialEq)]
 pub enum List<T> {
     Nil,
-    Cons(T, Box<List<T>>),
+    ConsRef(Rc<Cons<T>>),
 }
+
+#[derive(Debug, PartialEq)]
+pub struct Cons<T> {
+    head: T,
+    tail: Rc<List<T>>,
+}
+
 impl<T> List<T> {
     pub fn nil() -> List<T> {
         List::Nil
     }
     pub fn push(self, head: T) -> List<T> {
-        List::Cons(head, Box::new(self))
+        List::ConsRef(match self {
+            List::Nil => Rc::new(Cons {
+                head,
+                tail: Rc::new(self),
+            }),
+            List::ConsRef(cons) => Rc::new(Cons {
+                head,
+                tail: Rc::new(List::ConsRef(Rc::clone(&cons))),
+            }),
+        })
     }
-    pub fn pop(self) -> Option<(T, List<T>)> {
-        match self {
+    pub fn pop(&self) -> Option<Rc<Cons<T>>> {
+        match &self {
             List::Nil => None,
-            List::Cons(head, list) => Some((head, *list)),
+            List::ConsRef(cons) => Some(Rc::clone(cons)),
         }
     }
 }
@@ -25,9 +43,9 @@ impl<'a, T> Iterator for ListIterator<'a, T> {
     fn next(&mut self) -> Option<Self::Item> {
         match self.0 {
             List::Nil => None,
-            List::Cons(t, list) => {
-                self.0 = list;
-                Some(t)
+            List::ConsRef(cons) => {
+                self.0 = &cons.tail;
+                Some(&cons.head)
             }
         }
     }
@@ -61,24 +79,34 @@ impl<T> CanBeConned<T> for T {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use List::{Cons, Nil};
+    use List::{ConsRef, Nil};
 
     #[test]
     fn push() {
         assert_eq!(List::<i32>::nil(), Nil);
         assert_eq!(
             List::nil().push(1).push(2).push(3),
-            Cons(3, Box::new(Cons(2, Box::new(Cons(1, Box::new(Nil))))))
+            ConsRef(Rc::new(Cons {
+                head: 3,
+                tail: Rc::new(ConsRef(Rc::new(Cons {
+                    head: 2,
+                    tail: Rc::new(ConsRef(Rc::new(Cons {
+                        head: 1,
+                        tail: Rc::new(Nil)
+                    })))
+                })))
+            }))
         );
     }
 
     #[test]
     fn pop() {
-        let mut input: List<i32> = 1.cons(2.cons(3.nil()));
+        let input: List<i32> = 1.cons(2.cons(3.nil()));
         let mut result: Vec<i32> = Vec::new();
-        while let Some((head, tail)) = input.pop() {
-            result.push(head);
-            input = tail;
+        let mut ptr = Rc::new(input);
+        while let Some(cons) = ptr.pop() {
+            result.push(cons.head);
+            ptr = Rc::clone(&cons.tail);
         }
         assert_eq!(result, vec![1, 2, 3]);
     }
