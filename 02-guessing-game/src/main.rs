@@ -5,7 +5,7 @@ use std::io::{self, Stdin};
 const QUIT: &str = "quit";
 const MAX: u32 = 20;
 
-fn print_result(guess: u32, ord: Ordering) -> () {
+fn print_result(guess: u32, ord: Ordering) {
     println!(
         "You guessed {guess}, which was {}!",
         match ord {
@@ -24,9 +24,7 @@ fn main() {
     let read_guess = || -> String {
         let mut guess = String::new();
 
-        std_in
-            .read_line(&mut guess)
-            .expect("Failed to read line");
+        std_in.read_line(&mut guess).expect("Failed to read line");
 
         guess.trim().to_owned()
     };
@@ -51,5 +49,5 @@ fn main() {
         if cmp_res.is_eq() {
             break;
         }
-    };
+    }
 }
