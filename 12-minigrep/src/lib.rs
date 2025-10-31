@@ -1,8 +1,8 @@
 mod config;
 
 use crate::config::Config;
-use result_ex::ResultEx;
 use anyhow::Result;
+use result_ex::ResultEx;
 use std::{env, fs};
 
 pub fn run_using_env() -> Result<()> {
@@ -16,8 +16,7 @@ where
     Config::parse(args)
         .m_product(read_file)
         .map(|(cfg, contents)| {
-            search(&cfg.pattern, &contents)
-                .for_each(|result| println!("{result}"))
+            search(&cfg.pattern, &contents).for_each(|result| println!("{result}"))
         })
 }
 
@@ -41,6 +40,9 @@ Rust:
 safe, fast, productive.
 Pick three.";
 
-        assert_eq!(vec!["safe, fast, productive."], search(query, contents).collect::<Vec<&str>>());
+        assert_eq!(
+            vec!["safe, fast, productive."],
+            search(query, contents).collect::<Vec<&str>>()
+        );
     }
 }

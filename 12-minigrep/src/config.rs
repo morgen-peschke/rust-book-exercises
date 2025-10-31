@@ -28,8 +28,7 @@ impl Config {
                 bail!(ConfigParseErr::TooManyArguments(remaining.len() + 2))
             }
             (a, b, remaining) => {
-                let arg_count = 
-                [a.iter().count(), b.iter().count(), remaining.len()]
+                let arg_count = [a.iter().count(), b.iter().count(), remaining.len()]
                     .iter()
                     .sum();
                 bail!(ConfigParseErr::NotEnoughArguments(arg_count))
