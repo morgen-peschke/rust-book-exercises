@@ -7,7 +7,7 @@ mod resource;
 fn main() -> Result<()> {
     println!(
         "list = {}",
-        1.cons(2.cons(3.cons(4.cons(5.nil()))))
+        1.cons(&2.cons(&3.cons(&4.cons(&5.nil()))))
             .into_iter()
             .map(|x| x.to_string())
             .collect::<Vec<String>>()
