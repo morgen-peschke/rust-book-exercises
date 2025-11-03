@@ -35,7 +35,7 @@ impl<T> List<T> {
         let mut result: Vec<usize> = Vec::new();
         let mut ptr = &self.node;
         loop {
-            result.push(Rc::strong_count(&self.node));
+            result.push(Rc::strong_count(ptr));
             match ptr.as_cons() {
                 None => break,
                 Some((_, tail)) => ptr = &tail.node,
@@ -174,25 +174,25 @@ mod tests {
         assert_eq!(prefix._strong_counts(), vec![1, 1, 1]);
 
         let branch1 = 3.cons(&prefix);
-        assert_eq!(prefix._strong_counts(), vec![2, 2, 2]);
-        assert_eq!(branch1._strong_counts(), vec![1, 1, 1, 1]);
+        assert_eq!(prefix._strong_counts(), vec![2, 1, 1]);
+        assert_eq!(branch1._strong_counts(), vec![1, 2, 1, 1]);
 
         let branch2 = 4.cons(&prefix);
-        assert_eq!(prefix._strong_counts(), vec![3, 3, 3]);
-        assert_eq!(branch2._strong_counts(), vec![1, 1, 1, 1]);
+        assert_eq!(prefix._strong_counts(), vec![3, 1, 1]);
+        assert_eq!(branch2._strong_counts(), vec![1, 3, 1, 1]);
 
         drop(branch1);
-        assert_eq!(prefix._strong_counts(), vec![2, 2, 2]);
-        assert_eq!(branch2._strong_counts(), vec![1, 1, 1, 1]);
+        assert_eq!(prefix._strong_counts(), vec![2, 1, 1]);
+        assert_eq!(branch2._strong_counts(), vec![1, 2, 1, 1]);
 
         let branch3 = 5.cons(&branch2);
-        assert_eq!(prefix._strong_counts(), vec![2, 2, 2]);
-        assert_eq!(branch2._strong_counts(), vec![2, 2, 2, 2]);
-        assert_eq!(branch3._strong_counts(), vec![1, 1, 1, 1, 1]);
+        assert_eq!(prefix._strong_counts(), vec![2, 1, 1]);
+        assert_eq!(branch2._strong_counts(), vec![2, 2, 1, 1]);
+        assert_eq!(branch3._strong_counts(), vec![1, 2, 2, 1, 1]);
 
         drop(branch2);
-        assert_eq!(prefix._strong_counts(), vec![2, 2, 2]);
-        assert_eq!(branch3._strong_counts(), vec![1, 1, 1, 1, 1]);
+        assert_eq!(prefix._strong_counts(), vec![2, 1, 1]);
+        assert_eq!(branch3._strong_counts(), vec![1, 1, 2, 1, 1]);
 
         drop(prefix);
         assert_eq!(branch3._strong_counts(), vec![1, 1, 1, 1, 1]);
