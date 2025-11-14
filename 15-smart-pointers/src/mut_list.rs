@@ -1,4 +1,8 @@
-use std::{cell::{Ref, RefCell}, fmt::Display, rc::Rc};
+use std::{
+    cell::{Ref, RefCell},
+    fmt::Display,
+    rc::Rc,
+};
 
 #[derive(Debug, PartialEq)]
 pub struct List<T> {
@@ -63,7 +67,10 @@ impl<T> List<T> {
         result
     }
 }
-impl<T> Display for List<T> where T: Display {
+impl<T> Display for List<T>
+where
+    T: Display,
+{
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         let mut ptr = &self.node;
         loop {
@@ -199,7 +206,7 @@ mod tests {
     fn iterator() {
         let input: List<i32> = 1.cons(&2.cons(&3.nil()));
         assert_eq!(
-            input.into_iter().map(|x|*x).collect::<Vec<i32>>(),
+            input.into_iter().map(|x| *x).collect::<Vec<i32>>(),
             vec![1, 2, 3]
         );
     }
@@ -245,17 +252,8 @@ mod tests {
 
         *value.borrow_mut() += 10;
 
-        assert_eq!(
-            a.into_iter().map(|x|*x).collect::<Vec<i32>>(),
-            vec![15]
-        );
-        assert_eq!(
-            b.into_iter().map(|x|*x).collect::<Vec<i32>>(),
-            vec![3, 15]
-        );
-        assert_eq!(
-            c.into_iter().map(|x|*x).collect::<Vec<i32>>(),
-            vec![4, 15]
-        );
+        assert_eq!(a.into_iter().map(|x| *x).collect::<Vec<i32>>(), vec![15]);
+        assert_eq!(b.into_iter().map(|x| *x).collect::<Vec<i32>>(), vec![3, 15]);
+        assert_eq!(c.into_iter().map(|x| *x).collect::<Vec<i32>>(), vec![4, 15]);
     }
 }
