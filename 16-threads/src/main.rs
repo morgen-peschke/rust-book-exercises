@@ -8,6 +8,7 @@ mod threads_playground;
 enum Commands {
     Threads,
     Channels(ChannelArgs),
+    ChannelsExample,
 }
 
 #[derive(Args, Debug)]
@@ -20,6 +21,7 @@ struct ChannelArgs {
 fn main() {
     match Commands::parse() {
         Commands::Threads => threads_playground::run(),
+        Commands::ChannelsExample => channels_playground::run_example(),
         Commands::Channels(ChannelArgs { producers }) => channels_playground::run(producers),
     }
 }
