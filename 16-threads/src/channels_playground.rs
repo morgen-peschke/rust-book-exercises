@@ -55,9 +55,6 @@ pub fn run(producers: usize) {
                 thread::sleep(Duration::from_secs(1));
             }
             println!("--> {i} done");
-            // Without this, tx doesn't get dropped for some reason, and
-            // the receiver never exits
-            drop(tx);
         })
     };
 
