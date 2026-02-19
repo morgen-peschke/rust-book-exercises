@@ -203,7 +203,10 @@ fn main() -> Result<(), Box<dyn Error>> {
                 }
             }
             println!(
-                "Initial state:\n{}",
+                // The leading space is because clap has trouble dealing with
+                // argument values that start with '-' and I don't want to
+                // deal with that when copy-pasting initial states.
+                "Initial state:\n' {}'",
                 collisions::DebugOutput(&starting_state)
             );
             Ok(())

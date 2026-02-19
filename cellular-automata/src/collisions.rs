@@ -7,10 +7,16 @@ pub struct Rule {
     pub partial_destroy: bool,
 }
 impl Rule {
+    /**
+     * Resolve collisions
+     */
     pub fn collide(&self, moving: &Moving, destination: &Cell) -> CollisionResult {
         match (moving, destination) {
+            // Uncontested moves
             (m @ Moving::Left(_), Cell::Empty) => CollisionResult::MovingWon(m.clone()),
             (m @ Moving::Right(_), Cell::Empty) => CollisionResult::MovingWon(m.clone()),
+
+            // Both moving in the same direction
             (m @ Moving::Left(_), Cell::InMotion(Moving::Left(d))) => {
                 CollisionResult::DestinationEscapes {
                     bumped: *d,
@@ -23,6 +29,11 @@ impl Rule {
                     moved: m.clone(),
                 }
             }
+
+            // Actual collisions
+            // There's probably a way to clean up the duplication, but I can't
+            // be bothered right now to figure out how to abstract the constructors
+            // without creating more duplication than I'd be removing.
             (Moving::Left(m), Cell::InMotion(Moving::Right(d))) => {
                 let new_weight = if self.partial_destroy {
                     (m - d).abs()
@@ -150,6 +161,9 @@ impl ParserState {
 }
 
 impl State {
+    /**
+     * Generates a random initial state using a weighted-probability algorithm
+     */
     pub fn random(
         length: usize,
         weight_stationary: u16,
@@ -182,6 +196,9 @@ impl State {
         State { cells }
     }
 
+    /**
+     * Very dumb parsing, nothing to see here
+     */
     pub fn from_string(raw: &str) -> Result<State, String> {
         let mut state = ParserState {
             is_left: false,
@@ -230,6 +247,10 @@ impl State {
         Ok(State { cells })
     }
 
+    /**
+     * Probably a way to unify these into a single pass, but the fields are
+     * small enough it wasn't worth the trouble
+     */
     fn all_empty_or_left(&self) -> bool {
         self.cells
             .iter()
@@ -248,6 +269,13 @@ impl State {
             .all(|c| matches!(c, Cell::Empty | Cell::Stationary(_)))
     }
 
+    /**
+     * Move an object leftwards
+     *
+     * Depending on how collisions resolve, it can recursively shuffle objects
+     * further leftward. `was_bumped` is important for this, so we don't accidentally
+     * overwrite the value that bumped this one.
+     */
     fn move_left(
         cells: &mut Vec<Cell>,
         index: usize,
@@ -255,13 +283,19 @@ impl State {
         was_bumped: bool,
         rule: &Rule,
     ) -> usize {
+        // The index check is because `usize` is unsigned and underflow sucks
         match if index == 0 {
             None
         } else {
-            cells.get(index - 1)
+            // Have to clone here or the borrow checker gets annoyed when we
+            // mutate things later - but oddly only after pulling the code
+            // that sets the cell to empty was pulled out to before the match.
+            // If it's inlined with each setting of the previous cell, the
+            // borrow checker is fine with it.
+            cells.get(index - 1).cloned()
         } {
             None => {
-                // Hit a side wall, bounce
+                // Hit a side wall, maybe bounce?
                 if rule.bounce {
                     cells[index] = Cell::InMotion(Moving::Right(weight));
                 } else {
@@ -269,29 +303,20 @@ impl State {
                 }
             }
             Some(destination) => {
-                match rule.collide(&Moving::Left(weight), destination) {
+                if !was_bumped {
+                    cells[index] = Cell::Empty;
+                }
+                match rule.collide(&Moving::Left(weight), &destination) {
                     CollisionResult::BothDestroyed => {
-                        if !was_bumped {
-                            cells[index] = Cell::Empty;
-                        }
                         cells[index - 1] = Cell::Empty;
                     }
                     CollisionResult::MovingWon(cell) => {
-                        if !was_bumped {
-                            cells[index] = Cell::Empty;
-                        }
                         cells[index - 1] = Cell::InMotion(cell);
                     }
                     CollisionResult::DestinationWon(cell) => {
-                        if !was_bumped {
-                            cells[index] = Cell::Empty;
-                        }
                         cells[index - 1] = cell;
                     }
                     CollisionResult::DestinationEscapes { moved, bumped } => {
-                        if !was_bumped {
-                            cells[index] = Cell::Empty;
-                        }
                         cells[index - 1] = Cell::InMotion(moved);
                         // Need to propagate the motion backwards
                         State::move_left(cells, index - 1, bumped, true, rule);
@@ -299,9 +324,19 @@ impl State {
                 }
             }
         }
+        // This one's simple, since we're moving the object into an already
+        // processed part of the cell array, we can just advance one step.
+        // Things will not be so easy in `move_right`
         index + 1
     }
 
+    /**
+     * Move an object rightwards
+     *
+     * Depending on how collisions resolve, it can recursively shuffle objects
+     * further rightward. `was_bumped` is important for this, so we don't accidentally
+     * overwrite the value that bumped this one.
+     */
     fn move_right(
         cells: &mut Vec<Cell>,
         index: usize,
@@ -309,46 +344,49 @@ impl State {
         was_bumped: bool,
         rule: &Rule,
     ) -> usize {
-        match cells.get(index + 1) {
+        // Cloning shenanigans again, see `move_left`
+        match cells.get(index + 1).cloned() {
             None => {
-                // Hit a side wall, bounce
+                // Hit a side wall, maybe bounce?
                 if rule.bounce {
                     cells[index] = Cell::InMotion(Moving::Left(weight));
                 } else {
                     cells[index] = Cell::Stationary(weight);
                 }
+                // Since this only affected the current cell, we only
+                // advance once (though this is kind of irrelevant since we're
+                // advancing past the end of the vector)
                 index + 1
             }
             Some(destination) => {
-                match rule.collide(&Moving::Right(weight), destination) {
+                if !was_bumped {
+                    cells[index] = Cell::Empty;
+                }
+                match rule.collide(&Moving::Right(weight), &destination) {
                     CollisionResult::BothDestroyed => {
-                        if !was_bumped {
-                            cells[index] = Cell::Empty;
-                        }
                         cells[index + 1] = Cell::Empty;
+                        // Since we destroyed the next cell, we can skip it
+                        // as well
                         index + 2
                     }
                     CollisionResult::MovingWon(cell) => {
-                        //println!("{cell:?} @ {index}");
-                        if !was_bumped {
-                            cells[index] = Cell::Empty;
-                        }
                         cells[index + 1] = Cell::InMotion(cell);
+                        // We moved into the next cell, so it's already been
+                        // processed and we can skip it as well
                         index + 2
                     }
                     CollisionResult::DestinationWon(cell) => {
-                        if !was_bumped {
-                            cells[index] = Cell::Empty;
-                        }
                         cells[index + 1] = cell;
+                        // We updated the next cell, but it hasn't been processed
+                        // so we can't skip it
                         index + 1
                     }
                     CollisionResult::DestinationEscapes { moved, bumped } => {
-                        if !was_bumped {
-                            cells[index] = Cell::Empty;
-                        }
                         cells[index + 1] = Cell::InMotion(moved);
-                        // Need to propagate the motion forwards
+                        // Need to propagate the bumped object forwards, so we're
+                        // delegating the amount to change index by to the recursive calls.
+                        // This wasn't needed in `move_left`, but we're moving into unprocessed
+                        // territory and don't want to process objects twice.
                         State::move_right(cells, index + 1, bumped, true, rule)
                     }
                 }
@@ -357,6 +395,7 @@ impl State {
     }
 
     pub fn next(&self, rule: &Rule) -> Option<State> {
+        // Stop once collisions are impossible
         if self.all_empty_or_left() || self.all_empty_or_right() || self.all_empty_or_stationary() {
             return None;
         };
@@ -394,6 +433,11 @@ impl Display for State {
     }
 }
 
+/**
+ * A wrapper to debug-print the State
+ *
+ * Make sure that this outputs something that State::from_string can understand
+ */
 pub struct DebugOutput<'a>(pub &'a State);
 impl<'a> Display for DebugOutput<'a> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
