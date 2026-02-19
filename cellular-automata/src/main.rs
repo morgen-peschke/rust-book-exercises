@@ -168,6 +168,7 @@ fn main() -> Result<(), Box<dyn Error>> {
                 bounce,
                 partial_destroy,
             };
+            let print_starting_state = initial_state.state_string.is_none();
             let starting_state = initial_state.state_string.unwrap_or_else(|| {
                 collisions::State::random(
                     random_generation_args.random_state_width,
@@ -202,13 +203,15 @@ fn main() -> Result<(), Box<dyn Error>> {
                     }
                 }
             }
-            println!(
-                // The leading space is because clap has trouble dealing with
-                // argument values that start with '-' and I don't want to
-                // deal with that when copy-pasting initial states.
-                "Initial state:\n' {}'",
-                collisions::DebugOutput(&starting_state)
-            );
+            if print_starting_state {
+                println!(
+                    // The leading space is because clap has trouble dealing with
+                    // argument values that start with '-' and I don't want to
+                    // deal with that when copy-pasting initial states.
+                    "Initial state:\n' {}'",
+                    collisions::DebugOutput(&starting_state)
+                );
+            }
             Ok(())
         }
     }
