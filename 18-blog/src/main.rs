@@ -8,4 +8,3 @@ fn main() {
     post.approve();
     println!("{}", post.content());
 }
-

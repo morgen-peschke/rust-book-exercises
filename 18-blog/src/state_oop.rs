@@ -39,4 +39,3 @@ impl State for Published {
         &post.content
     }
 }
-

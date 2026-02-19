@@ -1,5 +1,5 @@
-mod state_oop;
 mod state_enum;
+mod state_oop;
 
 pub struct Post {
     state: Option<Box<dyn State>>,
@@ -25,7 +25,7 @@ impl Post {
         self.content.push_str(text);
     }
 
-     pub fn content(&self) -> &str {
+    pub fn content(&self) -> &str {
         self.state
             .as_ref()
             .expect("Post state should not be missing")
