@@ -422,8 +422,8 @@ impl Display for State {
         f.write_char('|')?;
         for c in &self.cells {
             match c {
-                Cell::Empty => f.write_char('_'),
-                Cell::Stationary(_) => f.write_char('X'),
+                Cell::Empty => f.write_char('-'),
+                Cell::Stationary(_) => f.write_char('^'),
                 Cell::InMotion(Moving::Left(_)) => f.write_char('<'),
                 Cell::InMotion(Moving::Right(_)) => f.write_char('>'),
             }?;
