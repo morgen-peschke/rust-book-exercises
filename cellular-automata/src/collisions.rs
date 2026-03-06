@@ -1,12 +1,58 @@
-use std::fmt::{Display, Write};
+use std::{fmt::{Display, Write}, str::FromStr};
 
 use rand::Rng;
 
+#[derive(Clone)]
+pub enum WallStrike {
+    Bounce,
+    Crash,
+    Stop,
+}
+impl FromStr for WallStrike {
+    type Err = String;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        let s = s.trim().to_ascii_lowercase();
+        if "bounce".starts_with(&s) {
+            Ok(WallStrike::Bounce)
+        } else if "crash".starts_with(&s) {
+            Ok(WallStrike::Crash)
+        } else if "stop".starts_with(&s) {
+            Ok(WallStrike::Stop)
+        } else {
+            Err("Expected a unique prefix of 'bounce', 'crash', or 'stop'".to_string())
+        }
+    }
+}
+impl Display for WallStrike {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.write_str(match self {
+            WallStrike::Bounce => "bounce",
+            WallStrike::Crash => "crash",
+            WallStrike::Stop => "stop",
+        })
+    }
+}
+
 pub struct Rule {
-    pub bounce: bool,
+    pub wall_strike: WallStrike,
     pub partial_destroy: bool,
 }
 impl Rule {
+    pub fn strike_wall(&self, moving: Moving) -> Cell {
+        match self.wall_strike {
+            WallStrike::Bounce => Cell::InMotion(match moving {
+                Moving::Left(v) => Moving::Right(v),
+                Moving::Right(v) => Moving::Left(v),
+            }),
+            WallStrike::Crash => Cell::Empty,
+            WallStrike::Stop => Cell::Stationary(match moving {
+                Moving::Left(v) => v,
+                Moving::Right(v) => v,
+            })
+        }
+    }
+
     /**
      * Resolve collisions
      */
@@ -294,14 +340,7 @@ impl State {
             // borrow checker is fine with it.
             cells.get(index - 1).cloned()
         } {
-            None => {
-                // Hit a side wall, maybe bounce?
-                if rule.bounce {
-                    cells[index] = Cell::InMotion(Moving::Right(weight));
-                } else {
-                    cells[index] = Cell::Stationary(weight);
-                }
-            }
+            None => cells[index] = rule.strike_wall(Moving::Left(weight)),
             Some(destination) => {
                 if !was_bumped {
                     cells[index] = Cell::Empty;
@@ -347,12 +386,7 @@ impl State {
         // Cloning shenanigans again, see `move_left`
         match cells.get(index + 1).cloned() {
             None => {
-                // Hit a side wall, maybe bounce?
-                if rule.bounce {
-                    cells[index] = Cell::InMotion(Moving::Left(weight));
-                } else {
-                    cells[index] = Cell::Stationary(weight);
-                }
+                cells[index] = rule.strike_wall(Moving::Right(weight));
                 // Since this only affected the current cell, we only
                 // advance once (though this is kind of irrelevant since we're
                 // advancing past the end of the vector)

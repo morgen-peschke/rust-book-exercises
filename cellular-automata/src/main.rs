@@ -48,12 +48,12 @@ struct SimpleArgs {
 #[derive(Args)]
 struct ColliderArgs {
     #[arg(
-        short = 'b',
+        short = 'w',
         long,
-        help = "Do cells bounce off the ends of the field, or just come to a stop",
-        default_value_t = false
+        help = "How do cells behave when they hit a wall?",
+        default_value_t = collisions::WallStrike::Stop
     )]
-    bounce: bool,
+    wall_strike: collisions::WallStrike,
     #[arg(
         short = 'd',
         long = "damage",
@@ -159,13 +159,13 @@ fn main() -> Result<(), Box<dyn Error>> {
         Commands::Collider(ColliderArgs {
             initial_state,
             generations,
-            bounce,
+            wall_strike,
             partial_destroy,
             debug,
             random_generation_args,
         }) => {
             let rule = collisions::Rule {
-                bounce,
+                wall_strike,
                 partial_destroy,
             };
             let print_starting_state = initial_state.state_string.is_none();
