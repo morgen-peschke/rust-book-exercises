@@ -1,0 +1,7 @@
+# Seeds for failure cases proptest has generated in the past. It is
+# automatically read and these particular cases re-run before any
+# novel cases are generated.
+#
+# It is recommended to check this file in to source control so that
+# everyone who runs the test benefits from these saved cases.
+cc a4a74ab1e0e80fe101045f118e65848a939e814b52320558034ef4469f7b5b5f # shrinks to expression = Unary { op: Group(Paren), child: Binary { op: Plus, lhs: Number { value: 0 }, rhs: Binary { op: Plus, lhs: Number { value: 0 }, rhs: Number { value: 0 } } } }

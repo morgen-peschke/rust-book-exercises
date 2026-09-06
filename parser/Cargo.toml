@@ -1,0 +1,11 @@
+[package]
+name = "expression-parser"
+version = "0.1.0"
+edition = "2024"
+
+[dev-dependencies]
+proptest = "1.11.0"
+
+[dependencies]
+bigdecimal = "0.4.10"
+
