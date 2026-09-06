@@ -1,4 +1,7 @@
-use std::{fmt::{Display, Write}, str::FromStr};
+use std::{
+    fmt::{Display, Write},
+    str::FromStr,
+};
 
 use rand::Rng;
 
@@ -49,7 +52,7 @@ impl Rule {
             WallStrike::Stop => Cell::Stationary(match moving {
                 Moving::Left(v) => v,
                 Moving::Right(v) => v,
-            })
+            }),
         }
     }
 
