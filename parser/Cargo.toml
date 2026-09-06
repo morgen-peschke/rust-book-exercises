@@ -8,4 +8,6 @@ proptest = "1.11.0"
 
 [dependencies]
 bigdecimal = "0.4.10"
+clap = { version = "4.5.51", features = ["derive"] }
+
 
